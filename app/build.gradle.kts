@@ -40,6 +40,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    kotlin {
+        jvmToolchain(8)
+    }
     buildFeatures {
         compose = true
     }
@@ -99,13 +102,15 @@ dependencies {
         // Dagger Hilt dependencies
         implementation("com.google.dagger:hilt-android:2.45")
         kapt ("com.google.dagger:hilt-compiler:2.45")
+        implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
         annotationProcessor("com.google.dagger:hilt-android-compiler:2.45")
 
         // Hilt ViewModel support
-        implementation("androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03")
         kapt("androidx.hilt:hilt-compiler:1.1.0-beta01")
 
         // Add the Palette library for color extraction from images
         implementation ("androidx.palette:palette-ktx:1.0.0")
+
+        implementation ("androidx.compose.ui:ui:1.5.3")
     }
 }

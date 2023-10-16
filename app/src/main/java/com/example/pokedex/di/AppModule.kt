@@ -1,6 +1,6 @@
 package com.example.pokedex.di
 
-import com.example.pokedex.PokeApi
+import com.example.pokedex.data.remote.responses.PokeApi
 import com.example.pokedex.repository.PokemonRepository
 import com.example.pokedex.util.Constants.BASE_URL
 import dagger.Module

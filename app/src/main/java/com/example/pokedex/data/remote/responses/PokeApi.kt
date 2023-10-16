@@ -1,4 +1,4 @@
-package com.example.pokedex
+package com.example.pokedex.data.remote.responses
 
 import com.example.pokedex.data.remote.responses.Pokemon
 import com.example.pokedex.data.remote.responses.PokemonList
