@@ -1,10 +1,12 @@
 package com.example.pokedex.pokemonlist
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -26,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -41,14 +45,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.pokedex.R
 import com.example.pokedex.models.PokedexListEntry
-import com.example.pokedex.ui.theme.RobotoCondensed
-import com.google.accompanist.coil.CoilImage
+
 
 @Composable
 fun PokemonListScreen(
@@ -75,7 +80,8 @@ fun PokemonListScreen(
             ) {
 
             }
-
+            Spacer(modifier = Modifier.height(16.dp))
+            PokemonList(navController = navController)
         }
     }
 }
@@ -124,64 +130,26 @@ fun SearchBar(
 }
 
 @Composable
-fun PokedexEntry(
-    entry: PokedexListEntry,
+fun PokemonList(
     navController: NavController,
-    modifier: Modifier = Modifier,
     viewModel: PokemonListViewModel = hiltViewModel()
 ) {
-    val defaultDominantColor = MaterialTheme.colorScheme.surface
-    var dominantColor by remember {
-        mutableStateOf(defaultDominantColor)
-    }
+    val pokemonList by remember { viewModel.pokemonList }
+    val endReached by remember { viewModel.endReached }
+    val loadError by remember { viewModel.loadError }
+    val isLoading by remember { viewModel.isLoading }
 
-    Box(
-        contentAlignment = Center,
-        modifier = Modifier
-            .shadow(5.dp, shape = RoundedCornerShape(10.dp))
-            .clip(shape = RoundedCornerShape(10.dp))
-            .aspectRatio(1f)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        dominantColor,
-                        defaultDominantColor
-                    )
-                )
-            )
-            .clickable {
-                navController.navigate(
-                    "pokemon_detail_screen/${dominantColor.toArgb()}/${entry.pokemonName}"
-                )
+    LazyColumn(contentPadding = PaddingValues(16.dp)) {
+        val itemCount = if (pokemonList.size % 2 == 0) {
+            pokemonList.size / 2
+        } else {
+            pokemonList.size / 2 + 1
+        }
+        items(itemCount) {
+            if (it >= itemCount - 1 && !endReached) {
+                viewModel.loadPokemonPaginated()
             }
-    ) {
-        Column {
-            CoilImage(request = ImageRequest.Builder(LocalContext.current)
-                .data(entry.imageUrl)
-                .target {
-                    viewModel.calcDominantColor(it) { color ->
-                        dominantColor = color
-                    }
-                }
-                .build(),
-                contentDescription = entry.pokemonName,
-                fadeIn = true,
-                modifier = modifier
-                    .size(120.dp)
-                    .align(CenterHorizontally)
-            ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.scale(0.5f)
-                )
-            }
-            Text(
-                text = entry.pokemonName,
-                fontFamily = RobotoCondensed,
-                fontSize = 20.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            PokedexRow(rowIndex = it, entries = pokemonList, navController = navController)
         }
     }
 }
@@ -223,5 +191,68 @@ fun PokedexRow(
 
         // Add vertical spacing between rows
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@OptIn(ExperimentalCoilApi::class)
+@Composable
+fun PokedexEntry(
+    entry: PokedexListEntry,
+    navController: NavController,
+    modifier: Modifier,
+    viewModel: PokemonListViewModel = hiltViewModel()
+) {
+    val defaultDominantColor = MaterialTheme.colorScheme.surface
+    var dominantColor by remember {
+        mutableStateOf(defaultDominantColor)
+    }
+
+    Box(
+        contentAlignment = Center,
+        modifier = modifier
+            .shadow(5.dp, shape = RoundedCornerShape(10.dp))
+            .clip(shape = RoundedCornerShape(10.dp))
+            .aspectRatio(1f)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        dominantColor,
+                        defaultDominantColor
+                    )
+                )
+            )
+            .clickable {
+                navController.navigate(
+                    "pokemon_detail_screen/${dominantColor.toArgb()}/${entry.pokemonName}"
+                )
+            }
+    ) {
+    }
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        Log.d("bilbo", "Attempting to load image from URL: ${entry.imageUrl}")
+
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(entry.imageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = entry.pokemonName,
+            onSuccess = {
+                viewModel.calcDominantColor(it.result.drawable) { color ->
+                    dominantColor = color
+                }
+                Log.d("bilbo", "Image loaded successfully.")
+            },
+            onError = {
+                // Handle image loading error
+                Log.e("bilbo", "Error loading image.")
+            },
+            modifier = Modifier
+                .size(120.dp)
+                .align(CenterHorizontally)
+        )
     }
 }

@@ -8,7 +8,4 @@ sealed class Resource<T>(val data: T? = null, val message: String? = null) {
 
     // Subclass representing the error state, holding an error message and optional associated data.
     class Error<T>(message: String, data: T? = null) : Resource<T>(data, message)
-
-    // Subclass representing the loading state, with an optional associated data.
-    class Loading<T>(data: T? = null) : Resource<T>(data)
 }

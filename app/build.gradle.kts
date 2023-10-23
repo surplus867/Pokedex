@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt") // Apply the kapt plugin
     id("dagger.hilt.android.plugin")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -78,7 +79,7 @@ dependencies {
         // Retrofit
         implementation("com.squareup.retrofit2:retrofit:2.9.0")
         implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-        implementation("com.squareup.okhttp3:okhttp:4.9.0")
+        implementation("com.squareup.okhttp3:okhttp:4.11.0")
         implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
 
         // Timber
@@ -89,15 +90,16 @@ dependencies {
 
         // Coroutines
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
 
         // Coroutines Lifecycle Scopes
         implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
 
+
         // Coil
-        implementation("io.coil-kt:coil:1.1.1")
-        implementation("com.google.accompanist:accompanist-coil:0.7.0")
+        implementation("io.coil-kt:coil-compose:2.4.0")
+        implementation ("com.google.accompanist:accompanist-coil:0.15.0")
 
         // Dagger Hilt dependencies
         implementation("com.google.dagger:hilt-android:2.45")
