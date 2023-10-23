@@ -3,7 +3,9 @@ package com.example.pokedex
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
@@ -32,8 +34,8 @@ class MainActivity : ComponentActivity() {
                         // Placeholder content for tge villager list screen
                         //Text(text = "pokemon List Screen")
                         PokemonListScreen(navController = navController)
-
                     }
+
                     composable(
                         "pokemon_detail_screen/{dominantColor}/{pokemonName}",
                         arguments = listOf(
@@ -46,7 +48,7 @@ class MainActivity : ComponentActivity() {
                         )
                     ) { backStackEntry ->
                         // Retrieve the arguments from the backStackEntry
-                        val dominantColor = backStackEntry.arguments?.getInt("dominantColor") ?.let {
+                        val dominantColor = backStackEntry.arguments?.getInt("dominantColor")?.let {
                             Color(it)
                         } ?: Color.White
                         val pokemonName = backStackEntry.arguments?.getString("pokemonName") ?: ""
