@@ -6,11 +6,10 @@ import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.capitalize
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.palette.graphics.Palette
-import com.example.pokedex.models.PokedexListEntry
+import com.example.pokedex.models.PokemonEntry
 import com.example.pokedex.repository.PokemonRepository
 import com.example.pokedex.util.Constants.PAGE_SIZE
 import com.example.pokedex.util.Resource
@@ -28,7 +27,7 @@ class PokemonListViewModel @Inject constructor(
     private var curPage = 0
 
     // A list to store the Pokemon Data
-    var pokemonList = mutableStateOf<List<PokedexListEntry>>(listOf())
+    var pokemonList = mutableStateOf<List<PokemonEntry>>(listOf())
 
     //  A string to store any error messages during data loading
     var loadError = mutableStateOf("")
@@ -74,7 +73,7 @@ class PokemonListViewModel @Inject constructor(
                         // Debug: Log the URL
                         Log.d("ImageLoading", "Loading image for Pokemon $pokemonIndex from URL: $url")
 
-                        PokedexListEntry(entry.name.replaceFirstChar {
+                        PokemonEntry(entry.name.replaceFirstChar {
                             if (it.isLowerCase()) it.titlecase(
                                 Locale.ROOT
                             ) else it.toString()
