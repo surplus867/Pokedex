@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -43,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,10 +54,12 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.pokedex.R
 import com.example.pokedex.models.PokemonEntry
+import java.util.Locale
 
 @Composable
 fun PokemonListScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: PokemonListViewModel = hiltViewModel()
 ) {
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -76,7 +80,7 @@ fun PokemonListScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-
+                viewModel.searchPokemonList(it)
             }
             Spacer(modifier = Modifier.height(16.dp))
             PokemonList(navController = navController)
@@ -112,7 +116,7 @@ fun SearchBar(
                 .background(Color.White, CircleShape)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
                 .onFocusChanged {
-                    isHintDisplayed = it.isFocused.not()
+                    isHintDisplayed = it.isFocused.not() && text.isEmpty()
                 }
         )
         // Display hint text when isHintDisplayed is true
@@ -126,27 +130,38 @@ fun SearchBar(
         }
     }
 }
+
 @Composable
 fun PokemonList(
     navController: NavController,
     viewModel: PokemonListViewModel = hiltViewModel()
 ) {
+    val searchQuery by remember { viewModel.searchQuery }
     val pokemonList by remember { viewModel.pokemonList }
     val endReached by remember { viewModel.endReached }
     val loadError by remember { viewModel.loadError }
     val isLoading by remember { viewModel.isLoading }
 
+    // Filter the pokemonList based on the searchQuery
+    val filteredPokemonList = if (searchQuery.isNotBlank()) {
+        pokemonList.filter { pokemon ->
+            pokemon.pokemonName.contains(searchQuery, ignoreCase = true)
+        }
+    } else {
+        pokemonList
+    }
+
     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-        val itemCount = if (pokemonList.size % 2 == 0) {
-            pokemonList.size / 2
+        val itemCount = if (filteredPokemonList.size % 2 == 0) {
+            filteredPokemonList.size / 2
         } else {
-            pokemonList.size / 2 + 1
+            filteredPokemonList.size / 2 + 1
         }
         items(itemCount) {
             if (it >= itemCount - 1 && !endReached) {
                 viewModel.loadPokemonPaginated()
             }
-            PokedexRow(rowIndex = it, entries = pokemonList, navController = navController)
+            PokedexRow(rowIndex = it, entries = filteredPokemonList, navController = navController)
         }
     }
 
@@ -154,10 +169,10 @@ fun PokemonList(
         contentAlignment = Center,
         modifier = Modifier.fillMaxSize()
     ) {
-        if(isLoading) {
+        if (isLoading) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
-        if(loadError.isNotEmpty()) {
+        if (loadError.isNotEmpty()) {
             RetrySection(error = loadError) {
                 viewModel.loadPokemonPaginated()
             }
@@ -269,6 +284,7 @@ fun PokedexEntry(
     }
 
 }
+
 @Composable
 fun RetrySection(
     error: String,
@@ -277,9 +293,10 @@ fun RetrySection(
     Column {
         Text(error, color = Color.Red, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { onRetry() },
+        Button(
+            onClick = { onRetry() },
             modifier = Modifier.align(CenterHorizontally)
-            ) {
+        ) {
             Text(text = "Retry")
         }
     }

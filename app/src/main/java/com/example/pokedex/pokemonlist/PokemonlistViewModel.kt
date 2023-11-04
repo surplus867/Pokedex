@@ -14,6 +14,7 @@ import com.example.pokedex.repository.PokemonRepository
 import com.example.pokedex.util.Constants.PAGE_SIZE
 import com.example.pokedex.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
@@ -25,6 +26,9 @@ class PokemonListViewModel @Inject constructor(
 
     // Current page = 0
     private var curPage = 0
+
+    // Add a mutableStatOf for searchQuery
+    var searchQuery = mutableStateOf("")
 
     // A list to store the Pokemon Data
     var pokemonList = mutableStateOf<List<PokemonEntry>>(listOf())
@@ -38,10 +42,56 @@ class PokemonListViewModel @Inject constructor(
     // A boolean to indicated if all data has been loaded
     var endReached = mutableStateOf(false)
 
+    // A cached pokemon list
+    private var cachedPokemonList = listOf<PokemonEntry>()
+
+    // To save initial pokemon list in this cached pokemon list when we actually started the search
+    private var isSearchStarting = true
+
+    // This is actually true as search results are actually displaying as long as the search field actually contains something
+    var isSearching = mutableStateOf(false)
+
     // Constructor
     init {
         // When the ViewModel is created, initiate the data loading
         loadPokemonPaginated()
+    }
+
+    private fun trimQuery(query: String): String {
+        return query.trim()
+    }
+
+    fun searchPokemonList(query: String) {
+
+        // Update searchQuery when a new query is entered
+        searchQuery.value = query
+
+        val listToSearch = if(isSearchStarting) {
+            pokemonList.value
+        } else {
+            cachedPokemonList
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+
+            val trimmedQuery = trimQuery(query)
+            Log.d("SearchQuery", "Query: $trimmedQuery")
+
+            if(trimmedQuery.isEmpty()) {
+                pokemonList.value = cachedPokemonList
+                isSearching.value = false
+                isSearchStarting = true
+                return@launch
+            }
+            val results = listToSearch.filter {
+                it.pokemonName.contains(trimmedQuery, ignoreCase = true) ||
+                        it.number.toString() == trimmedQuery
+            }
+            if(isSearchStarting) {
+                cachedPokemonList = pokemonList.value
+                isSearchStarting = false
+            }
+            pokemonList.value = results
+        }
     }
 
     // Function to load Pokemon data in a paginated manner
