@@ -1,5 +1,6 @@
 package com.example.pokedex.pokemonlist
 
+import android.content.ContentValues.TAG
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -66,7 +67,7 @@ class PokemonListViewModel @Inject constructor(
         // Update searchQuery when a new query is entered
         searchQuery.value = query
 
-        val listToSearch = if(isSearchStarting) {
+        val listToSearch = if (isSearchStarting) {
             pokemonList.value
         } else {
             cachedPokemonList
@@ -76,7 +77,7 @@ class PokemonListViewModel @Inject constructor(
             val trimmedQuery = trimQuery(query)
             Log.d("SearchQuery", "Query: $trimmedQuery")
 
-            if(trimmedQuery.isEmpty()) {
+            if (trimmedQuery.isEmpty()) {
                 pokemonList.value = cachedPokemonList
                 isSearching.value = false
                 isSearchStarting = true
@@ -86,7 +87,7 @@ class PokemonListViewModel @Inject constructor(
                 it.pokemonName.contains(trimmedQuery, ignoreCase = true) ||
                         it.number.toString() == trimmedQuery
             }
-            if(isSearchStarting) {
+            if (isSearchStarting) {
                 cachedPokemonList = pokemonList.value
                 isSearchStarting = false
             }
@@ -120,14 +121,11 @@ class PokemonListViewModel @Inject constructor(
                         val url =
                             "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonIndex}.png"
 
-                        // Debug: Log the URL
-                        Log.d("ImageLoading", "Loading image for Pokemon $pokemonIndex from URL: $url")
-
                         PokemonEntry(entry.name.replaceFirstChar {
                             if (it.isLowerCase()) it.titlecase(
                                 Locale.ROOT
                             ) else it.toString()
-                        }, url,number.toInt())
+                        }, url, number.toInt())
                     }
                     // Increment the current page
                     curPage++
@@ -142,6 +140,7 @@ class PokemonListViewModel @Inject constructor(
                     // Append the new data to the existing list
                     pokemonList.value += pokedexEntries
                 }
+
                 is Resource.Error -> {
                     // Update loadError with the error message
                     loadError.value = result.message!!
@@ -150,9 +149,22 @@ class PokemonListViewModel @Inject constructor(
                     isLoading.value = false
 
                 }
+
+                else -> {
+                    // Handle other cases (e.g., loading state or unexpected result)
+                    // You can log the unexpected result for debugging purposes.
+                    Log.e(TAG, "Unexpected result: $result")
+
+                    // Set isLoading to false as data loading is complete
+                    isLoading.value = false
+
+                    // Set a generic error message to notify the user of an issue.
+                    loadError.value = "An unexpected error occurred. Please try again later."
+                }
             }
         }
     }
+
 
     // Function to calculate the dominate color of a Drawable
     fun calcDominantColor(drawable: Drawable, onFinish: (Color) -> Unit) {
