@@ -1,8 +1,11 @@
 package com.example.pokedex.pokemondetail
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,14 +30,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.OffsetEffect
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +54,8 @@ import com.example.pokedex.R
 import com.example.pokedex.data.remote.responses.Pokemon
 import com.example.pokedex.data.remote.responses.Type
 import com.example.pokedex.util.Resource
+import com.example.pokedex.util.parseStatToAbbr
+import com.example.pokedex.util.parseStatToColor
 import com.example.pokedex.util.parseTypeColor
 import java.util.Locale
 import kotlin.math.round
@@ -161,6 +168,7 @@ fun PokemonDetailTopSection(
     }
 }
 
+// Handle different states of the Pokemon dtail (loading, success, error)
 @Composable
 fun PokemonDetailStateWrapper(
     pokemonInfo: Resource<Pokemon>,
@@ -196,6 +204,7 @@ fun PokemonDetailStateWrapper(
     }
 }
 
+// Display details of the Pokemon, including name, type, weight, height, and stats
 @Composable
 fun PokemonDetailSection(
     pokemonInfo: Pokemon,
@@ -229,10 +238,11 @@ fun PokemonDetailSection(
             pokemonWeight = pokemonInfo.weight,
             pokemonHeight = pokemonInfo.height
         )
+        PokemonBaseStats(pokemonInfo = pokemonInfo)
     }
 }
 
-
+// Composable function for displaying the Pokemon's type or types
 @Composable
 fun PokemonTypeSection(types: List<Type>) {
     Row(
@@ -267,7 +277,7 @@ fun PokemonTypeSection(types: List<Type>) {
     }
 }
 
-
+// Composable function for displaying the Pokemon's weight and height
 @Composable
 fun PokemonDetailDataSection(
     pokemonWeight: Int,
@@ -307,6 +317,7 @@ fun PokemonDetailDataSection(
     }
 }
 
+// Composable function for displaying a single piece of data
 @Composable
 fun PokemonDetailDataItem(
     dataValue: Float,
@@ -332,5 +343,108 @@ fun PokemonDetailDataItem(
             text = "$dataValue$dataUnit",
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+@Composable
+fun PokemonStat(
+    statName: String,
+    statValue: Int,
+    statMaxValue: Int,
+    statColor: Color,
+    height: Dp = 28.dp,
+    animDuration: Int = 1000,
+    animDelay: Int = 0
+) {
+    // Create a mutable state variable to track if the animation has played
+    var animationPlayed by remember {
+        mutableStateOf(false)
+    }
+    // Calculate the current percentage for the animation
+    val curPercent = animateFloatAsState(
+        targetValue = if (animationPlayed) {
+            statValue / statMaxValue.toFloat()
+
+        } else 0f,
+        animationSpec = tween(
+            animDuration,
+            animDelay
+        ), label = ""
+    )
+    // Trigger the animation once when the Composable is launched
+    LaunchedEffect(key1 = true) {
+        animationPlayed = true
+    }
+    // Create a Composable that displays the stat bar
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(CircleShape)
+            .background(
+                if (isSystemInDarkTheme()) {
+                    Color(0xFF505050)
+                } else {
+                    Color.LightGray
+                }
+            )
+    ) {
+        // Display the stat bar with the stat name and value
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(curPercent.value)
+                .clip(CircleShape)
+                .background(statColor)
+                .padding(horizontal = 8.dp)
+        ) {
+            Text(
+                text = statName,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = (curPercent.value * statMaxValue).toInt().toString(),
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+    }
+}
+
+// Composable function for displaying a Pokemon's base stats
+@Composable
+fun PokemonBaseStats(
+    pokemonInfo: Pokemon,
+    animDelayPerItem: Int = 100
+) {
+    // Find the maximum base stat value from the provided Pokemon Info
+    val maxBaseStat = remember {
+        pokemonInfo.stats.maxOf { it.baseStat }
+    }
+    // Create a Composable that displays all of the Pokemon's base stats
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Base stats:",
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Iterate through each base stats and display it using PokemonStat Composable
+        for (i in pokemonInfo.stats.indices) {
+            val stat = pokemonInfo.stats[i]
+            PokemonStat(
+                statName = parseStatToAbbr(stat),
+                statValue = stat.baseStat,
+                statMaxValue = maxBaseStat,
+                statColor = parseStatToColor(stat),
+                animDelay = i * animDelayPerItem
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 }
