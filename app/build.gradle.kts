@@ -86,7 +86,7 @@ dependencies {
         implementation("com.jakewharton.timber:timber:4.7.1")
 
         // Compose Navigation
-        implementation("androidx.navigation:navigation-compose:2.7.4")
+        implementation("androidx.navigation:navigation-compose:2.7.5")
 
         // Coroutines
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
@@ -104,15 +104,15 @@ dependencies {
         // Dagger Hilt dependencies
         implementation("com.google.dagger:hilt-android:2.45")
         kapt ("com.google.dagger:hilt-compiler:2.45")
-        implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+        implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
         annotationProcessor("com.google.dagger:hilt-android-compiler:2.45")
 
         // Hilt ViewModel support
-        kapt("androidx.hilt:hilt-compiler:1.1.0-beta01")
+        kapt("androidx.hilt:hilt-compiler:1.1.0")
 
         // Add the Palette library for color extraction from images
         implementation ("androidx.palette:palette-ktx:1.0.0")
 
-        implementation ("androidx.compose.ui:ui:1.5.3")
+        implementation ("androidx.compose.ui:ui:1.5.4")
     }
 }
